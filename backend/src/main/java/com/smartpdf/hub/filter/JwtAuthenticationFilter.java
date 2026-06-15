@@ -19,6 +19,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Collections;
 
 @Component
@@ -40,7 +41,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
         try {
-            SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+            byte[] keyBytes;
+            try {
+                keyBytes = Base64.getDecoder().decode(jwtSecret.trim());
+            } catch (IllegalArgumentException e) {
+                keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
+            }
+            SecretKey key = Keys.hmacShaKeyFor(keyBytes);
+
             Claims claims = Jwts.parser()
                     .verifyWith(key)
                     .build()
