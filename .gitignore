@@ -1,0 +1,38 @@
+# System Files
+.DS_Store
+Thumbs.db
+
+# Environment variables (Crucial for security!)
+.env
+.env.local
+.env.production
+.env.development
+*.env
+*.env.*
+
+# Backend (Spring Boot / Maven)
+/backend/target/
+/backend/.mvn/
+/backend/mvnw
+/backend/mvnw.cmd
+/backend/.project
+/backend/.classpath
+/backend/.settings/
+/backend/*.iml
+
+# Frontend (Next.js / Node)
+/frontend/node_modules/
+/frontend/.next/
+/frontend/out/
+/frontend/build/
+/frontend/.docusaurus/
+/frontend/.turbo/
+
+# IDE / Editor Files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

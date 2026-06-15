@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../docker/backend/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://$${SUPABASE_DB_HOST}:$${SUPABASE_DB_PORT}/$${SUPABASE_DB_NAME}?sslmode=require
+      - SPRING_DATASOURCE_USERNAME=$${SUPABASE_DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=$${SUPABASE_DB_PASSWORD}
+      - SUPABASE_JWT_SECRET=$${SUPABASE_JWT_SECRET}
+      - GEMINI_API_KEY=$${GEMINI_API_KEY}
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/frontend/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_SUPABASE_URL=$${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=$${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
+    depends_on:
+      - backend
+    restart: always
