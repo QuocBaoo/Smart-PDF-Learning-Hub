@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +40,7 @@ public class PdfService {
     }
 
     public List<PdfPageContent> extractTextByPageFromUrl(String fileUrl) throws IOException {
-        URL url = new URL(fileUrl);
+        URL url = URI.create(fileUrl).toURL();
         try (InputStream in = url.openStream();
              PDDocument document = Loader.loadPDF(in.readAllBytes())) {
             return extractText(document);

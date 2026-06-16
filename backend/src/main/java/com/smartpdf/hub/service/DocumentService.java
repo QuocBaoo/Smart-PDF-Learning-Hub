@@ -29,6 +29,7 @@ public class DocumentService {
     private final UserRepository userRepository;
     private final PdfChunkRepository pdfChunkRepository;
     private final PdfService pdfService;
+    private final GeminiService geminiService;
 
     @Transactional
     public DocumentResponse registerDocument(UUID userId, DocumentRequest request) {
@@ -118,6 +119,7 @@ public class DocumentService {
             // Step 3: Chunking & saving
             int chunkSize = 1000;
             int overlap = 150;
+            int totalChunks = 0;
 
             for (PdfService.PdfPageContent page : pagesContent) {
                 List<String> pageChunks = chunkText(page.getText(), chunkSize, overlap);
@@ -125,16 +127,22 @@ public class DocumentService {
                     if (chunkText.trim().isEmpty()) {
                         continue;
                     }
-                    PdfChunk chunk = PdfChunk.builder()
-                            .document(document)
-                            .pageNumber(page.getPageNumber())
-                            .chunkContent(chunkText)
-                            .build();
-                    pdfChunkRepository.save(chunk);
+                    // Generate vector embedding via Gemini API
+                    List<Double> embeddingValues = geminiService.getEmbedding(chunkText);
+                    String formattedEmbedding = formatEmbedding(embeddingValues);
+
+                    // Insert using native SQL query to bypass standard Hibernate mapping for pgvector
+                    pdfChunkRepository.insertChunkWithEmbedding(
+                            document.getId(),
+                            page.getPageNumber(),
+                            chunkText,
+                            formattedEmbedding
+                    );
+                    totalChunks++;
                 }
             }
 
-            log.info("Successfully processed document {}. Total pages: {}, chunks generated.", docId, pagesContent.size());
+            log.info("Successfully processed document {}. Total pages: {}, chunks generated: {}.", docId, pagesContent.size(), totalChunks);
 
         } catch (IOException e) {
             log.error("Failed to read/process PDF from URL: " + document.getFileUrl(), e);
@@ -161,6 +169,15 @@ public class DocumentService {
             }
         }
         return chunks;
+    }
+
+    private String formatEmbedding(List<Double> embedding) {
+        if (embedding == null || embedding.isEmpty()) {
+            return null;
+        }
+        return embedding.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(",", "[", "]"));
     }
 
     private DocumentResponse mapToResponse(Document document) {

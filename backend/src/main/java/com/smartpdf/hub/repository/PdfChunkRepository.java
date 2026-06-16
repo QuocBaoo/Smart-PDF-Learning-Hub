@@ -32,4 +32,17 @@ public interface PdfChunkRepository extends JpaRepository<PdfChunk, UUID> {
             @Param("chunkContent") String chunkContent,
             @Param("embedding") String embedding // Truyen vao dang "[0.1, 0.2, ...]"
     );
+
+    /**
+     * Tim kiem cac chunk co vector tuong dong gan nhat voi cau hoi RAG.
+     */
+    @Query(value = "SELECT id, document_id, page_number, chunk_content, similarity FROM match_pdf_chunks(" +
+            "cast(:queryEmbedding as vector), :matchThreshold, :matchCount, :documentId)",
+            nativeQuery = true)
+    List<Object[]> searchSimilarChunks(
+            @Param("queryEmbedding") String queryEmbedding,
+            @Param("matchThreshold") double matchThreshold,
+            @Param("matchCount") int matchCount,
+            @Param("documentId") UUID documentId
+    );
 }
